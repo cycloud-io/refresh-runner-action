@@ -1,0 +1,48 @@
+name: Refresh Runner
+description: Creates/Refreshes self hosted runner.
+
+inputs:
+  ## Required Parameters
+  org-name:
+    description: Target organization name.
+    required: true
+  github-access-token:
+    description: Github access token to use. Token should be personal access token or Github Apps generated token.
+    required: true
+  
+  ## Optional Parameters
+  runner-version:
+    description: |
+      Version of Github Self Hosted Runner. (NOTE: Architecture is fixed to "linux-x64")
+    required: false
+    default: '2.272.0'
+  runner-name:
+    description: Name of the dummy runner to be created/refreshed.
+    required: false
+    default: managed-dummy-runner
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run dummy runner
+      shell: bash
+      run: |
+        # Prepare runner
+        mkdir actions-runner && cd actions-runner
+        curl -s -O -L https://github.com/actions/runner/releases/download/v${{ inputs.runner-version }}/actions-runner-linux-x64-${{ inputs.runner-version }}.tar.gz
+        tar xzf ./actions-runner-linux-x64-${{ inputs.runner-version }}.tar.gz
+
+        # Get runner token
+        RUNNER_TOKEN=$(bash ${{ github.action_path }}/script/get-runner-token.sh ${{ inputs.github-access-token }} ${GITHUB_API_URL} ${{ inputs.org-name }} )
+
+        # Configure dummy runner
+        ./config.sh \
+            --name ${{ inputs.runner-name }} \
+            --url ${GITHUB_SERVER_URL}/${{ inputs.org-name }} \
+            --token ${RUNNER_TOKEN} \
+            --labels dummy-runner \
+            --replace \
+            --unattended
+
+        # Run dummy runner
+        python ${{ github.action_path }}/script/run-dummy-runner.py
