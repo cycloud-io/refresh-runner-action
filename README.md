@@ -17,8 +17,11 @@ However, because dummy runner is in offline states, Github sever will remove the
 
 - Required
   - `org-name`: Target organization name. (ex. lab)
-  - `github-access-token`: Github access token to use. Token should be personal access token or Github Apps generated token.
-      - "admin:org" scope is required organization target.
+  - `github-access-token`: Github access token to use.
+      - Following scope/permission is required depending on solutions you use:
+          - Personal Access Token: `admin:org` scope is required for the target organization.
+          - OAuth Apps: `admin:org` scope is required for the target organization.
+          - GitHub Apps: `organization_self_hosted_runners: write` permission for the target organization. ([REST API Link](https://docs.github.com/en/enterprise-server@3.0/rest/reference/apps#create-an-installation-access-token-for-an-app))
       - Always use secret environment (ex. `${{ secrets.SECRET_NAME }}`). **NEVER SET THIS VALUE AS PLAIN TEXT.**
 - Optional
   - `runner-version`: Runner version to use. (default: `2.272.0`)
