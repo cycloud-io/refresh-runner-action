@@ -13,9 +13,9 @@ inputs:
   ## Optional Parameters
   runner-version:
     description: |
-      Version of Github Self Hosted Runner. (NOTE: Architecture is fixed to "linux-x64")
+      Version of Github Self Hosted Runner. If not specified, it will use the version of the running runner. (NOTE: Architecture is fixed to "linux-x64")
     required: false
-    default: '2.272.0'
+    default: ''
   runner-name:
     description: Name of the dummy runner to be created/refreshed.
     required: false
@@ -27,15 +27,28 @@ runs:
     - name: Run dummy runner
       shell: bash
       run: |
-        # Prepare runner
+        # Exit on error
+        set -eu
+
+        # Prepare dummy runner files
         mkdir actions-runner && cd actions-runner
-        curl -s -O -L https://github.com/actions/runner/releases/download/v${{ inputs.runner-version }}/actions-runner-linux-x64-${{ inputs.runner-version }}.tar.gz
-        tar xzf ./actions-runner-linux-x64-${{ inputs.runner-version }}.tar.gz
+        if [ "${{ inputs.runner-version }}" = "" ]; then
+            RUNNER_PATH=$(dirname $(dirname $RUNNER_TEMP))
+            echo "### Copy runner files from the running runner:"
+            echo "    - runner_path: $RUNNER_PATH"
+            # We need to exclude temp/state related files when copying the existing runner files.
+            rsync -a ${RUNNER_PATH}/ . --exclude "_*" --exclude ".*"
+        else
+            DOWNLOAD_URL="https://github.com/actions/runner/releases/download/v${{ inputs.runner-version }}/actions-runner-linux-x64-${{ inputs.runner-version }}.tar.gz"
+            echo "### Download runner files:"
+            echo "    - download_url: $DOWNLOAD_URL"
+            curl -s -O -L https://github.com/actions/runner/releases/download/v${{ inputs.runner-version }}/actions-runner-linux-x64-${{ inputs.runner-version }}.tar.gz
+            tar xzf ./actions-runner-linux-x64-${{ inputs.runner-version }}.tar.gz
+        fi
+        echo "Prepared dummy runner version: $(./config.sh --version)"
 
-        # Get runner token
+        echo "### Configure dummy runner"
         RUNNER_TOKEN=$(bash ${{ github.action_path }}/script/get-runner-token.sh ${{ inputs.github-access-token }} ${GITHUB_API_URL} ${{ inputs.org-name }} )
-
-        # Configure dummy runner
         ./config.sh \
             --name ${{ inputs.runner-name }} \
             --url ${GITHUB_SERVER_URL}/${{ inputs.org-name }} \
@@ -44,5 +57,5 @@ runs:
             --replace \
             --unattended
 
-        # Run dummy runner
-        python ${{ github.action_path }}/script/run-dummy-runner.py
+        echo "### Run dummy runner"
+        python -u ${{ github.action_path }}/script/run-dummy-runner.py

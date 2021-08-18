@@ -25,7 +25,8 @@ However, because dummy runner is always in offline status, GitHub sever will rem
           - GitHub Apps: `organization_self_hosted_runners: write` permission for the target organization. ([REST API Link](https://docs.github.com/en/enterprise-server@3.0/rest/reference/apps#create-an-installation-access-token-for-an-app))
       - Always use secret environment (ex. `${{ secrets.SECRET_NAME }}`). **NEVER SET THIS VALUE AS PLAIN TEXT.**
 - Optional
-  - `runner-version`: Runner version to use. (default: `2.272.0`)
+  - `runner-version`: Dummy runner version to use. If not specified, it will copy and use the version of the running runner.
+      - **Not specifying runner-version is highly recommended because it uses the same runner version**. (Dummy runner may fail if versions differ)
   - `runner-name`: Name of the dummy runner to be created/refreshed. (default: `managed-dummy-runner`)
 
 For complete action definition, see [action.yaml](./action.yaml)
