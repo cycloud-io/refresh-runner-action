@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -eu
 
 RUNNER_API_ACCESS_TOKEN=$1
 API_URL=$2
