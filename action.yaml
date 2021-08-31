@@ -37,7 +37,7 @@ runs:
             echo "### Copy runner files from the running runner:"
             echo "    - runner_path: $RUNNER_PATH"
             # We need to exclude temp/state related files when copying the existing runner files.
-            rsync -a ${RUNNER_PATH}/ . --exclude "_*" --exclude ".*"
+            rsync --copy-links -a ${RUNNER_PATH}/ . --exclude "_*" --exclude ".*"
         else
             DOWNLOAD_URL="https://github.com/actions/runner/releases/download/v${{ inputs.runner-version }}/actions-runner-linux-x64-${{ inputs.runner-version }}.tar.gz"
             echo "### Download runner files:"
