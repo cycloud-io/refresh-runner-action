@@ -9,7 +9,7 @@ inputs:
     required: false
   repo-name:
     description: |
-      Target repository name. Repository name must include owner: {owner}/{repo}`.
+      Target repository name. Repository name must include owner: `{owner}/{repo}`.
       Either org-name or repo-name must be specified.
     default: ""
     required: false

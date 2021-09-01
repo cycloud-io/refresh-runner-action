@@ -1,10 +1,6 @@
 GitHub Action for refreshing dummy self hosted runner.
+The action creates or refreshes dummy runner for target organization or target repository.
 
-- Create or refresh dummy runner for target organization.
-
-**Table of Contents**
-
-[TOC]
 # Background
 
 When you are using managed self-hosted-runner solution such as [myshoes](https://github.com/whywaita/myshoes), you'll need to add dummy runner to the target organization/repository.
