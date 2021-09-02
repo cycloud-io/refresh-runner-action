@@ -4,8 +4,15 @@ description: Creates/Refreshes self hosted runner.
 inputs:
   ## Required Parameters
   org-name:
-    description: Target organization name.
-    required: true
+    description: Target organization name. Either org-name or repo-name must be specified.
+    default: ""
+    required: false
+  repo-name:
+    description: |
+      Target repository name. Repository name must include owner: `{owner}/{repo}`.
+      Either org-name or repo-name must be specified.
+    default: ""
+    required: false
   github-access-token:
     description: Github access token to use. Token should be personal access token or Github Apps generated token.
     required: true
@@ -13,7 +20,8 @@ inputs:
   ## Optional Parameters
   runner-version:
     description: |
-      Version of Github Self Hosted Runner. If not specified, it will use the version of the running runner. (NOTE: Architecture is fixed to "linux-x64")
+      Version of Github Self Hosted Runner. 
+      If not specified, it will use the version of the running runner. (NOTE: Architecture is fixed to "linux-x64")
     required: false
     default: ''
   runner-name:
@@ -29,6 +37,15 @@ runs:
       run: |
         # Exit on error
         set -eu
+
+        if [ "${{ inputs.org-name }}" != "" ] &&  [ "${{ inputs.repo-name }}" != "" ]; then
+            echo "Error: Can't specify both org-name and repo-name."
+            exit 1
+        fi
+        if [ "${{ inputs.org-name }}" = "" ] && [ "${{ inputs.repo-name }}" = "" ]; then
+            echo "Error: Required to specify either org-name or repo-name."
+            exit 1
+        fi
 
         # Prepare dummy runner files
         mkdir actions-runner && cd actions-runner
@@ -48,10 +65,19 @@ runs:
         echo "Prepared dummy runner version: $(./config.sh --version)"
 
         echo "### Configure dummy runner"
-        RUNNER_TOKEN=$(bash ${{ github.action_path }}/script/get-runner-token.sh ${{ inputs.github-access-token }} ${GITHUB_API_URL} ${{ inputs.org-name }} )
+        if [ "${{ inputs.org-name }}" != "" ]; then
+            echo "target org: ${{ inputs.org-name }}"
+            RUNNER_TOKEN=$(bash ${{ github.action_path }}/script/get-org-runner-token.sh ${{ inputs.github-access-token }} ${GITHUB_API_URL} ${{ inputs.org-name }} )
+            TARGET_NAME=${{ inputs.org-name }}
+        else
+            echo "target repository: ${{ inputs.repo-name }}"
+            RUNNER_TOKEN=$(bash ${{ github.action_path }}/script/get-repo-runner-token.sh ${{ inputs.github-access-token }} ${GITHUB_API_URL} ${{ inputs.repo-name }} )
+            TARGET_NAME=${{ inputs.repo-name }}
+        fi
+
         ./config.sh \
             --name ${{ inputs.runner-name }} \
-            --url ${GITHUB_SERVER_URL}/${{ inputs.org-name }} \
+            --url ${GITHUB_SERVER_URL}/${TARGET_NAME} \
             --token ${RUNNER_TOKEN} \
             --labels dummy-runner \
             --replace \
